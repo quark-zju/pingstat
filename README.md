@@ -10,7 +10,7 @@ Dependencies
 
 Usage
 =====
-Simplily run:
+Just run:
 
     ./pingstat.rb [host_name]
 
