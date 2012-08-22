@@ -21,6 +21,7 @@
 # THE SOFTWARE.
 
 require 'RRD'
+require 'date'
 
 INTERVALS      = [2, 24, 24 * 7] # unit: hour
 
@@ -101,7 +102,7 @@ def draw_graph(rtt_upper_limit = 10)
         '--start', "-#{hours * 3600}", '--end', 'now',
         '--font', 'DEFAULT:7:',
         '--title', "#{HOST} pingstat (24h)",
-        '--watermark', "\n#{DateTime.now}",
+        '--watermark', "\n#{DateTime.now.inspect}",
         '--vertical-label', 'latency (ms)',
         '--right-axis', "#{right_axis_scale}:0",
         '--right-axis-label', 'packet loss (%)',
