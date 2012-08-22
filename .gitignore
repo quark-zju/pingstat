@@ -1,0 +1,5 @@
+*.rrd
+*.png
+!sample.png
+backup/
+
