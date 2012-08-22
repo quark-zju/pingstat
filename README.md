@@ -16,7 +16,7 @@ Simplily run:
 
 Pictures and rrd files will be written in current directory.
 
-If you want to keep pingstat running for several hosts in background. Check `keep.sh`.
+If you want to run pingstat as a daemon, check `keep.sh`.
 
 Configuration
 =============

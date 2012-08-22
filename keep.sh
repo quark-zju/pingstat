@@ -1,14 +1,31 @@
-#!/bin/sh
+#!/bin/bash
 
-HOSTS='gateway www.google.com'
+[ -z "$HOSTS" ] && HOSTS='gateway www.google.com'
 
-cd $(dirname `readlink -f "$0"`)
-exec >/dev/null 2>/dev/null
+case "${1:-start}" in
+    start)
+        cd $(dirname `readlink -f "$0"`)
 
-for i in $HOSTS; do
-    pidof pingstat_$i && continue
-    ./pingstat.rb $i &
-done
-
-disown
+        for i in $HOSTS; do
+            pidof pingstat_$i >/dev/null && continue
+            echo "starting pingstat $i"
+            ./pingstat.rb $i >/dev/null 2>/dev/null &
+            disown
+        done
+        ;;
+    stop)
+        for i in $HOSTS; do
+            PID=`pidof pingstat_$i`
+            [ -z "$PID" ] && continue
+            echo "stopping pingstat $i"
+            kill $PID
+        done
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+esac
 
