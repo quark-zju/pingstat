@@ -23,7 +23,7 @@
 require 'RRD'
 require 'date'
 
-INTERVALS      = [2, 24, 24 * 7] # unit: hour
+INTERVALS      = [2, 24, 24 * 14] # unit: hour
 
 HOST           = ARGV[0] || 'www.google.com'
 RRD_FILE       = "ping_#{HOST.gsub('.','_')}.rrd"
@@ -86,13 +86,25 @@ class DataFrame
     end
 end
 
+def auto_unit(minutes)
+  x = minutes > 1 ? minutes : 1
+
+  [[[10080, 'WEEK'], [1440, 'DAY'], [60, 'HOUR'], [1, 'MINUTE']].find do |u|
+    x >= u[0]
+  end].map { |u| [x/u[0], u[-1], u[0], "#{u[1]}:#{x/u[0]}"] }.first
+end
+
 def draw_graph(rtt_upper_limit = 10)
     # I haven't find a way to let RRDTool auto scale
     # in this case. Thus, scale manually.
     right_axis_scale = 100.0 / rtt_upper_limit
 
     INTERVALS.each do |hours|
-      name = (hours % 24 == 0 ? "#{hours / 24}d" : "#{hours}h")
+      name = lambda { |t| "#{t[0]}#{t[1].chars.first.downcase}" }[auto_unit(hours * 60)]
+      x_grid = "#{auto_unit((hours*10+23)/24)[-1]}:" \
+               "#{auto_unit((hours*60+23)/24)[-1]}:" \
+               "#{auto_unit(hours*5)[-1]}:0:" + \
+               (hours >= 144 ? '%b %d' : '%R')
       RRD.graph(
         RRD_GRAPH_FILE.gsub('.png', "_#{name}.png"), 
         '-w', 785, '-h', 120, '-a', 'PNG',
@@ -102,11 +114,11 @@ def draw_graph(rtt_upper_limit = 10)
         '--start', "-#{hours * 3600}", '--end', 'now',
         '--font', 'DEFAULT:7:',
         '--title', "#{HOST} pingstat (#{name})",
-        '--watermark', "\n#{DateTime.now.inspect}",
+        '--watermark', "\n#{DateTime.now.strftime('%c')}",
         '--vertical-label', 'latency (ms)',
         '--right-axis', "#{right_axis_scale}:0",
         '--right-axis-label', 'packet loss (%)',
-        '--x-grid', 'MINUTE:10:HOUR:1:MINUTE:120:0:%R',
+        '--x-grid', x_grid,
         "DEF:roundtrip=#{RRD_FILE}:rtt:MAX",
         "DEF:packetloss=#{RRD_FILE}:pl:MAX",
         "CDEF:plscaled=packetloss,#{right_axis_scale},/",

@@ -4,7 +4,7 @@ Draw ping statistics using RRDTool and ruby.
 
 Dependencies
 ============
-* ruby
+* ruby (1.8 or 1.9)
 * librrd-ruby
 * ping
 
@@ -21,6 +21,6 @@ If you want to run pingstat as a daemon, check `keep.sh`.
 Configuration
 =============
 
-By default, pingstat writes 3 pictures every minutes: 2 hours, 1 day and 1 week.
+By default, pingstat writes 3 pictures every minutes: 2 hours, 1 day and 2 weeks.
 To change this, just edit `INTERVAL = [...]` in `pingstat.rb`.
 
