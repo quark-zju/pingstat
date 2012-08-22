@@ -101,7 +101,7 @@ def draw_graph(rtt_upper_limit = 10)
         '--lower-limit', 0,
         '--start', "-#{hours * 3600}", '--end', 'now',
         '--font', 'DEFAULT:7:',
-        '--title', "#{HOST} pingstat (24h)",
+        '--title', "#{HOST} pingstat (#{name})",
         '--watermark', "\n#{DateTime.now.inspect}",
         '--vertical-label', 'latency (ms)',
         '--right-axis', "#{right_axis_scale}:0",
