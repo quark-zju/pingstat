@@ -5,8 +5,8 @@ Draw ping statistics using RRDTool and ruby.
 Dependencies
 ============
 * ruby (1.8 or 1.9)
-* librrd-ruby
-* ping
+* librrd-ruby (should support RRD.xport)
+* ping (\*nix version)
 
 Usage
 =====
