@@ -94,44 +94,50 @@ def auto_unit(minutes)
   end].map { |u| [x/u[0], u[-1], u[0], "#{u[1]}:#{x/u[0]}"] }.first
 end
 
-def draw_graph(rtt_upper_limit = 10)
+def draw_graph
+  INTERVALS.each do |hours|
     # I haven't find a way to let RRDTool auto scale
-    # in this case. Thus, scale manually.
+    # in this case. Thus, instead of using RRTTool's
+    # auto scale ability, scale manually.
+
+    # Decide rtt upper limit
+    rtt_upper_limit = RRD.xport('--start', "-#{hours * 3600}", 
+                                "DEF:rtt=#{RRD_FILE}:rtt:AVERAGE",
+                                "XPORT:rtt")[-1].map(&:first).reject(&:nan?).max * 1.2
+    # Round rtt upper limit
+    rtt_upper_limit = [2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000].find { |x| x > rtt_upper_limit } || 10000
+
+    # Decide right axis scale
     right_axis_scale = 100.0 / rtt_upper_limit
 
-    INTERVALS.each do |hours|
-      name = lambda { |t| "#{t[0]}#{t[1].chars.first.downcase}" }[auto_unit(hours * 60)]
-      x_grid = "#{auto_unit((hours*10+23)/24)[-1]}:" \
-               "#{auto_unit((hours*60+23)/24)[-1]}:" \
-               "#{auto_unit(hours*5)[-1]}:0:" + \
-               (hours >= 144 ? '%b %d' : '%R')
-      RRD.graph(
-        RRD_GRAPH_FILE.gsub('.png', "_#{name}.png"), 
-        '-w', 785, '-h', 120, '-a', 'PNG',
-        '-Y', '-r', '-E',
-        '--upper-limit', rtt_upper_limit,
-        '--lower-limit', 0,
-        '--start', "-#{hours * 3600}", '--end', 'now',
-        '--font', 'DEFAULT:7:',
-        '--title', "#{HOST} pingstat (#{name})",
-        '--watermark', "\n#{DateTime.now.strftime('%c')}",
-        '--vertical-label', 'latency (ms)',
-        '--right-axis', "#{right_axis_scale}:0",
-        '--right-axis-label', 'packet loss (%)',
-        '--x-grid', x_grid,
-        "DEF:roundtrip=#{RRD_FILE}:rtt:AVERAGE",
-        "DEF:packetloss=#{RRD_FILE}:pl:AVERAGE",
-        "CDEF:plscaled=packetloss,#{right_axis_scale},/",
-        'LINE1:roundtrip#0000FF:latency (ms)',
-        'AREA:plscaled#FF000099:packet loss (%)')
-    end
-end
+    name = lambda { |t| "#{t[0]}#{t[1].chars.first.downcase}" }[auto_unit(hours * 60)]
 
-def auto_scale(x)
-    [5, 10, 20, 50, 100, 200, 500, 1000, 5000].each do |u|
-        return u if x * 2 <= u
-    end
-    return 10000
+    x_grid = "#{auto_unit((hours*10+23)/24)[-1]}:" \
+      "#{auto_unit((hours*60+23)/24)[-1]}:" \
+      "#{auto_unit(hours*5)[-1]}:0:" + \
+      (hours >= 144 ? '%b %d' : '%R')
+
+    RRD.graph(
+      RRD_GRAPH_FILE.gsub('.png', "_#{name}.png"), 
+      '-w', 785, '-h', 120, '-a', 'PNG',
+      '-Y', '-r', '-E',
+      '--upper-limit', rtt_upper_limit,
+      '--lower-limit', 0,
+      '--start', "-#{hours * 3600}", '--end', 'now',
+      '--font', 'DEFAULT:7:',
+      '--title', "#{HOST} pingstat (#{name})",
+      '--watermark', "\n#{DateTime.now.strftime('%c')}",
+      '--vertical-label', 'latency (ms)',
+      '--right-axis', "#{right_axis_scale}:0",
+      '--right-axis-label', 'packet loss (%)',
+      '--x-grid', x_grid,
+      "DEF:roundtrip=#{RRD_FILE}:rtt:AVERAGE",
+      "DEF:packetloss=#{RRD_FILE}:pl:AVERAGE",
+      "CDEF:plscaled=packetloss,#{right_axis_scale},/",
+      'LINE1:roundtrip#0000FF:latency (ms)',
+      'AREA:plscaled#FF000099:packet loss (%)'
+    )
+  end
 end
 
 # main logic
@@ -145,7 +151,9 @@ if not File.exists? RRD_FILE
         '--step', '60',
         'DS:pl:GAUGE:120:0:100',
         'DS:rtt:GAUGE:120:0:10000000',
-        'RRA:AVERAGE:0.5:1:43200') # 43200: 60 * 24 * 30, 1 month
+        'RRA:AVERAGE:0.5:1:43200',
+        'RRA:MAX:0.5:1:43200'
+    )   # 43200: 60 * 24 * 30, 1 month
 end
 
 
@@ -167,7 +175,7 @@ loop do
         )
 
         # draw graph
-        draw_graph(auto_scale(data.avg))
+        draw_graph
 
         # reset ping counters
         data.reset
