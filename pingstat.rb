@@ -119,8 +119,8 @@ def draw_graph(rtt_upper_limit = 10)
         '--right-axis', "#{right_axis_scale}:0",
         '--right-axis-label', 'packet loss (%)',
         '--x-grid', x_grid,
-        "DEF:roundtrip=#{RRD_FILE}:rtt:MAX",
-        "DEF:packetloss=#{RRD_FILE}:pl:MAX",
+        "DEF:roundtrip=#{RRD_FILE}:rtt:AVERAGE",
+        "DEF:packetloss=#{RRD_FILE}:pl:AVERAGE",
         "CDEF:plscaled=packetloss,#{right_axis_scale},/",
         'LINE1:roundtrip#0000FF:latency (ms)',
         'AREA:plscaled#FF000099:packet loss (%)')
@@ -145,7 +145,7 @@ if not File.exists? RRD_FILE
         '--step', '60',
         'DS:pl:GAUGE:120:0:100',
         'DS:rtt:GAUGE:120:0:10000000',
-        'RRA:MAX:0.5:1:43200') # 43200: 60 * 24 * 30, 1 month
+        'RRA:AVERAGE:0.5:1:43200') # 43200: 60 * 24 * 30, 1 month
 end
 
 
