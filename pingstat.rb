@@ -103,9 +103,10 @@ def draw_graph
     # Decide rtt upper limit
     rtt_upper_limit = RRD.xport('--start', "-#{hours * 3600}", 
                                 "DEF:rtt=#{RRD_FILE}:rtt:AVERAGE",
-                                "XPORT:rtt")[-1].map(&:first).reject(&:nan?).max * 1.2
+                                "XPORT:rtt")[-1].map(&:first).reject(&:nan?).max * 1.1
     # Round rtt upper limit
-    rtt_upper_limit = [2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000].find { |x| x > rtt_upper_limit } || 10000
+    rtt_upper_limit = [1, 2, 4, 5, 8].product([*0..3]).map{|a| a[0]*10**a[1]}.sort \
+                      .find { |x| x > rtt_upper_limit } || 10000
 
     # Decide right axis scale
     right_axis_scale = 100.0 / rtt_upper_limit
