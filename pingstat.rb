@@ -162,7 +162,7 @@ data = DataFrame.new
 last_min = nil
 
 loop do
-    data.update(ping :host => HOST, :count => 3, :timeout => 4)
+    data.update(ping :host => HOST, :count => 7, :timeout => 2)
 
     now_min = Time.now.min
     if last_min != now_min
