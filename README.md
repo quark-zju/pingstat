@@ -1,6 +1,6 @@
 Draw ping statistics using RRDTool and ruby.
 
-![sample](/quark-zju/pingstat/raw/master/sample.png)
+![sample](https://raw.githubusercontent.com/quark-zju/pingstat/master/sample.png)
 
 Dependencies
 ============
