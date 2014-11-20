@@ -89,9 +89,25 @@ end
 def auto_unit(minutes)
   x = minutes > 1 ? minutes : 1
 
-  [[[10080, 'WEEK'], [1440, 'DAY'], [60, 'HOUR'], [1, 'MINUTE']].find do |u|
+  u = [[10080, 'WEEK'], [1440, 'DAY'], [60, 'HOUR'], [1, 'MINUTE']].find do |u|
     x >= u[0]
-  end].map { |u| [x/u[0], u[-1], u[0], "#{u[1]}:#{x/u[0]}"] }.first
+  end
+  [x/u[0], u[-1], u[0], "#{u[1]}:#{x/u[0]}"]
+end
+
+def auto_x_grid(minutes)
+  case minutes.to_i
+  when 10080..(1/0.0)
+    'WEEK:1'
+  when 1440...10080
+    "DAY:#{minutes / 1440}"
+  when 60...1440
+    hours = [12, 8, 6, 4, 2, 1].find {|v| minutes >= v * 60}
+    "HOUR:#{hours}"
+  else
+    minutes = [30, 20, 15, 10, 5, 4, 2, 1].find {|v| minutes >= v}
+    "MINUTE:#{minutes}"
+  end
 end
 
 def draw_graph
@@ -113,14 +129,17 @@ def draw_graph
 
     name = lambda { |t| "#{t[0]}#{t[1].chars.first.downcase}" }[auto_unit(hours * 60)]
 
-    x_grid = "#{auto_unit((hours*10+23)/24)[-1]}:" \
-      "#{auto_unit((hours*60+23)/24)[-1]}:" \
-      "#{auto_unit(hours*5)[-1]}:0:" + \
-      (hours >= 144 ? '%b %d' : '%R')
+    # Like: --x-grid MINUTE:10:HOUR:1:HOUR:4:0:%X
+    #        grid lines every 10 minutes, major grid lines every hour,
+    #        and labels every 4 hours.
+    x_grid = "#{auto_x_grid(hours*3)}:" \
+      "#{auto_x_grid(hours*10)}:" \
+      "#{auto_x_grid(hours*10)}:0:" + \
+      (hours >= 144 ? '%b%d' : '%R')
 
     RRD.graph(
       RRD_GRAPH_FILE.gsub('.png', "_#{name}.png"), 
-      '-w', 785, '-h', 120, '-a', 'PNG',
+      '-w', 240, '-h', 100, '-a', 'PNG',
       '-Y', '-r', '-E',
       '--upper-limit', rtt_upper_limit,
       '--lower-limit', 0,
