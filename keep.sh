@@ -1,6 +1,7 @@
 #!/bin/bash
 
-[ -z "$HOSTS" ] && HOSTS='gateway www.google.com'
+cd $(dirname `readlink -f "$0"`)/
+[ -z "$HOSTS" ] && HOSTS='www.baidu.com www.google.com'
 
 case "${1:-start}" in
     start)
